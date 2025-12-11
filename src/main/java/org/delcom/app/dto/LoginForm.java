@@ -14,11 +14,9 @@ public class LoginForm {
 
     private boolean rememberMe;
 
-    // Constructor
     public LoginForm() {
     }
 
-    // Getters and Setters
     public String getEmail() {
         return email;
     }

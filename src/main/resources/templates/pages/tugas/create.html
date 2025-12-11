@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base}">
+
+<head>
+    <title>Tambah Tugas</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Tambah Tugas Baru</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Enctype Wajib Ada -->
+                        <form th:action="@{/tugas/store}" method="post" enctype="multipart/form-data" th:object="${tugas}">
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Mata Kuliah</label>
+                                <input type="text" class="form-control" th:field="*{mataKuliah}" placeholder="Contoh: Pemrograman Web" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Judul Tugas</label>
+                                <input type="text" class="form-control" th:field="*{judul}" placeholder="Contoh: Makalah Bab 1" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Deskripsi</label>
+                                <textarea class="form-control" th:field="*{deskripsi}" rows="2"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Deadline</label>
+                                <input type="datetime-local" class="form-control" th:field="*{deadline}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Bukti Foto / Soal (Opsional)</label>
+                                <input type="file" name="fileGambar" class="form-control" accept="image/*">
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <a th:href="@{/tugas}" class="btn btn-secondary">Batal</a>
+                                <button type="submit" class="btn btn-primary">Simpan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base}">
+
+<head>
+    <title>Dashboard Tugas</title>
+    <!-- Library Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        
+        <!-- BAGIAN 1: DASHBOARD STATISTIK -->
+        <div class="row mb-4">
+            <!-- Statistik Angka -->
+            <div class="col-md-8">
+                <h3 class="mb-3">📊 Statistik Tugas Anda</h3>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card bg-primary text-white shadow-sm h-100">
+                            <div class="card-body">
+                                <h6 class="opacity-75">Total Tugas</h6>
+                                <h2 class="fw-bold" th:text="${totalTugas}">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-success text-white shadow-sm h-100">
+                            <div class="card-body">
+                                <h6 class="opacity-75">Selesai</h6>
+                                <h2 class="fw-bold" th:text="${statSelesai}">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-warning text-dark shadow-sm h-100">
+                            <div class="card-body">
+                                <h6 class="opacity-75">Sedang Proses</h6>
+                                <h2 class="fw-bold" th:text="${statProses}">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-danger text-white shadow-sm h-100">
+                            <div class="card-body">
+                                <h6 class="opacity-75">Telat / Tidak Selesai</h6>
+                                <h2 class="fw-bold" th:text="${statTelat}">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grafik -->
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                        <h6 class="text-center mb-3">Grafik Status Tugas</h6>
+                        <div style="width: 250px; height: 250px;">
+                            <canvas id="tugasChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- HEADER DAFTAR TUGAS -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>📝 Daftar Rincian</h3>
+            <a th:href="@{/tugas/create}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Tambah Tugas Baru
+            </a>
+        </div>
+
+        <!-- FITUR PENCARIAN (BARU) -->
+        <div class="card mb-3 shadow-sm border-0 bg-light">
+            <div class="card-body p-2">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" id="searchInput" class="form-control border-start-0" 
+                           placeholder="Cari tugas berdasarkan Mata Kuliah atau Judul...">
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifikasi -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- TABEL DATA -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="tugasTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Matkul</th>
+                                <th>Judul</th>
+                                <th>Deadline & Timer</th>
+                                <th>Bukti</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="tugas : ${listTugas}">
+                                <!-- Kolom 0: Matkul -->
+                                <td class="fw-bold text-primary" th:text="${tugas.mataKuliah}"></td>
+                                
+                                <!-- Kolom 1: Judul -->
+                                <td>
+                                    <div class="fw-bold" th:text="${tugas.judul}"></div>
+                                    <small class="text-muted" th:text="${tugas.deskripsi}"></small>
+                                </td>
+                                
+                                <td style="min-width: 200px;">
+                                    <div class="fw-bold text-dark" th:if="${tugas.deadline != null}">
+                                        <i class="bi bi-calendar-event"></i>
+                                        <span th:text="${#temporals.format(tugas.deadline, 'dd MMM yyyy, HH:mm')}"></span>
+                                    </div>
+                                    <div class="text-danger" th:if="${tugas.deadline == null}">- Tanggal Kosong -</div>
+                                    <div class="mt-1 countdown-timer"
+                                         th:data-deadline="${tugas.deadline}"
+                                         th:data-status="${tugas.status}">
+                                        <small class="text-secondary">Memuat...</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div th:if="${tugas.fotoBukti != null}">
+                                        <a th:href="@{'/uploads/' + ${tugas.fotoBukti}}" target="_blank">
+                                            <img th:src="@{'/uploads/' + ${tugas.fotoBukti}}" 
+                                                 style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">
+                                        </a>
+                                    </div>
+                                    <span th:unless="${tugas.fotoBukti != null}" class="text-muted">-</span>
+                                </td>
+                                <td>
+                                    <span th:if="${tugas.status == 'Selesai'}" class="badge bg-success">Selesai</span>
+                                    <span th:if="${tugas.status != 'Selesai' and tugas.deadline != null and tugas.deadline.isBefore(#temporals.createNow())}" class="badge bg-danger">Telat</span>
+                                    <span th:if="${tugas.status != 'Selesai' and tugas.deadline != null and !tugas.deadline.isBefore(#temporals.createNow())}" class="badge bg-warning text-dark">Proses</span>
+                                    <span th:if="${tugas.status != 'Selesai' and tugas.deadline == null}" class="badge bg-secondary">No Date</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        <form th:if="${tugas.status != 'Selesai'}" class="form-selesai"
+                                              th:action="@{'/tugas/' + ${tugas.id} + '/selesai'}" method="post">
+                                            <button class="btn btn-sm btn-outline-success" title="Selesai"><i class="bi bi-check-lg"></i></button>
+                                        </form>
+                                        <a th:href="@{'/tugas/edit/' + ${tugas.id}}" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i></a>
+                                        <form th:action="@{'/tugas/delete/' + ${tugas.id}}" method="post" onsubmit="return confirm('Hapus?');">
+                                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(listTugas)}">
+                                <td colspan="6" class="text-center py-4">Belum ada data tugas.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Pesan jika pencarian tidak ditemukan -->
+                    <div id="noResultMsg" class="text-center py-3 text-muted" style="display: none;">
+                        Tidak ditemukan tugas yang cocok.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCRIPT -->
+        <script th:inline="javascript">
+            document.addEventListener("DOMContentLoaded", function() {
+                
+                // --- 1. FITUR PENCARIAN (SEARCH) ---
+                const searchInput = document.getElementById('searchInput');
+                const table = document.getElementById('tugasTable');
+                const rows = table.querySelectorAll('tbody tr');
+                const noResultMsg = document.getElementById('noResultMsg');
+
+                searchInput.addEventListener('keyup', function() {
+                    const filter = searchInput.value.toLowerCase();
+                    let hasVisibleRow = false;
+
+                    rows.forEach(row => {
+                        // Cek jika ini baris "Belum ada data" (skip pencarian di baris ini)
+                        if (row.cells.length < 2) return;
+
+                        // Ambil Text dari Kolom Matkul (Index 0) dan Judul (Index 1)
+                        const matkul = row.cells[0].textContent.toLowerCase();
+                        const judul = row.cells[1].textContent.toLowerCase();
+
+                        // Logic Pencarian
+                        if (matkul.includes(filter) || judul.includes(filter)) {
+                            row.style.display = '';
+                            hasVisibleRow = true;
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+
+                    // Tampilkan pesan jika tidak ada hasil
+                    if (!hasVisibleRow && rows.length > 0) {
+                        noResultMsg.style.display = 'block';
+                    } else {
+                        noResultMsg.style.display = 'none';
+                    }
+                });
+
+
+                // --- 2. CONFIG CHART.JS ---
+                const countSelesai = /*[[${statSelesai}]]*/ 0;
+                const countProses = /*[[${statProses}]]*/ 0;
+                const countTelat = /*[[${statTelat}]]*/ 0;
+
+                const canvas = document.getElementById('tugasChart');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    new Chart(ctx, {
+                        type: 'doughnut', 
+                        data: {
+                            labels: ['Selesai', 'Proses', 'Telat'],
+                            datasets: [{
+                                data: [countSelesai, countProses, countTelat],
+                                backgroundColor: ['#198754', '#ffc107', '#dc3545'],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { position: 'bottom' } }
+                        }
+                    });
+                }
+
+                // --- 3. COUNTDOWN TIMER ---
+                function updateCountdowns() {
+                    const timers = document.querySelectorAll('.countdown-timer');
+                    timers.forEach(timer => {
+                        const deadlineStr = timer.getAttribute('data-deadline');
+                        const status = timer.getAttribute('data-status');
+                        const row = timer.closest('tr');
+                        const btnSelesai = row.querySelector('.form-selesai');
+
+                        if (status === 'Selesai') {
+                            timer.innerHTML = '<span class="text-success fw-bold">✓ Tepat Waktu</span>';
+                            if(btnSelesai) btnSelesai.style.display = 'none';
+                            return;
+                        }
+                        if (!deadlineStr) return; 
+
+                        const deadlineDate = new Date(deadlineStr).getTime();
+                        const now = new Date().getTime();
+                        const distance = deadlineDate - now;
+
+                        if (distance < 0) {
+                            timer.innerHTML = '<strong class="text-danger blink">⚠️ Tugas Tidak Selesai!</strong>';
+                            if (btnSelesai) btnSelesai.style.display = 'none';
+                        } else {
+                            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                            timer.innerHTML = `<small class="text-primary fw-bold" style="font-family:monospace">⏳ ${days}h ${hours}j ${minutes}m</small>`;
+                            if (btnSelesai) btnSelesai.style.display = 'block';
+                        }
+                    });
+                }
+                setInterval(updateCountdowns, 1000);
+                updateCountdowns();
+            });
+        </script>
+        
+    </div>
+</body>
+</html>

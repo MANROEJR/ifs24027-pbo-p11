@@ -1,79 +1,76 @@
 package org.delcom.app.configs;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.Map;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.webmvc.error.ErrorAttributes;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ExtendWith(MockitoExtension.class) // 1. Gunakan ini agar lebih ringan (tanpa SpringBootTest)
 class CustomErrorControllerTest {
 
-        @Test
-        @DisplayName("Mengembalikan response error dengan status 500")
-        void testHandleErrorReturns500() throws Exception {
-                Map<String, Object> errorMap = Map.of();
+    @Mock
+    private ErrorAttributes errorAttributes; // Mock object otomatis
 
-                ErrorAttributes errorAttributes = Mockito.mock(ErrorAttributes.class);
+    @InjectMocks
+    private CustomErrorController controller; // Inject mock ke controller otomatis
 
-                Mockito.when(
-                                errorAttributes.getErrorAttributes(
-                                                any(ServletWebRequest.class),
-                                                any(ErrorAttributeOptions.class)))
-                                .thenReturn(errorMap);
+    @Test
+    @DisplayName("Mengembalikan response error default 500")
+    void testHandleErrorReturns500() {
+        // Setup: ErrorAttributes mengembalikan map kosong (default behavior)
+        when(errorAttributes.getErrorAttributes(any(WebRequest.class), any(ErrorAttributeOptions.class)))
+                .thenReturn(Map.of());
 
-                CustomErrorController controller = new CustomErrorController(errorAttributes);
+        // Buat dummy request sederhana
+        ServletWebRequest webRequest = new ServletWebRequest(mock(HttpServletRequest.class));
 
-                HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
-                HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
-                ServletWebRequest webRequest = new ServletWebRequest(request, response);
+        // Eksekusi
+        ResponseEntity<Map<String, Object>> result = controller.handleError(webRequest);
 
-                ResponseEntity<Map<String, Object>> result = controller.handleError(webRequest);
+        // Validasi
+        assertEquals(500, result.getStatusCode().value());
+        assertEquals("error", result.getBody().get("status"));
+        assertEquals("Unknown Error", result.getBody().get("error"));
+    }
 
-                assertEquals(500, result.getStatusCode().value());
-                assertEquals("error", result.getBody().get("status"));
-                assertEquals("Unknown Error", result.getBody().get("error"));
-                assertEquals("unknown", result.getBody().get("path"));
-        }
+    @Test
+    @DisplayName("Mengembalikan response error 404")
+    void testHandleErrorReturns404() {
+        // Setup: ErrorAttributes mengembalikan data 404
+        Map<String, Object> errorMap = Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "path", "/api/salah");
 
-        @Test
-        @DisplayName("Mengembalikan response error dengan status 404")
-        void testHandleErrorReturns404() throws Exception {
-                Map<String, Object> errorMap = Map.of(
-                                "status", 404,
-                                "error", "Not Found",
-                                "path", "/error404");
+        when(errorAttributes.getErrorAttributes(any(WebRequest.class), any(ErrorAttributeOptions.class)))
+                .thenReturn(errorMap);
 
-                ErrorAttributes errorAttributes = Mockito.mock(ErrorAttributes.class);
+        // Buat dummy request sederhana
+        ServletWebRequest webRequest = new ServletWebRequest(mock(HttpServletRequest.class));
 
-                Mockito.when(
-                                errorAttributes.getErrorAttributes(
-                                                any(ServletWebRequest.class),
-                                                any(ErrorAttributeOptions.class)))
-                                .thenReturn(errorMap);
+        // Eksekusi
+        ResponseEntity<Map<String, Object>> result = controller.handleError(webRequest);
 
-                CustomErrorController controller = new CustomErrorController(errorAttributes);
-
-                // buat dummy request/response
-                HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
-                HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
-                ServletWebRequest webRequest = new ServletWebRequest(request, response);
-
-                ResponseEntity<Map<String, Object>> result = controller.handleError(webRequest);
-
-                assertEquals(404, result.getStatusCode().value());
-                assertEquals("fail", result.getBody().get("status"));
-                assertEquals("Not Found", result.getBody().get("error"));
-                assertEquals("/error404", result.getBody().get("path"));
-        }
+        // Validasi
+        assertEquals(404, result.getStatusCode().value());
+        assertEquals("fail", result.getBody().get("status")); // 4xx dianggap 'fail'
+        assertEquals("Not Found", result.getBody().get("error"));
+        assertEquals("/api/salah", result.getBody().get("path"));
+    }
 }

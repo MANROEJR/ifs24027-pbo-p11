@@ -15,11 +15,9 @@ public class RegisterForm {
     @NotBlank(message = "Kata sandi harus diisi")
     private String password;
 
-    // Constructor
     public RegisterForm() {
     }
 
-    // Getters and Setters
     public String getName() {
         return name;
     }

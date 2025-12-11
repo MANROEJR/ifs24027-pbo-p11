@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE">Aplikasi Tugas Kuliah</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <!-- CSS CUSTOM UNTUK BACKGROUND PATTERN -->
+    <style>
+        body {
+            /* 1. Mengambil gambar dari folder static/images */
+            /* Pastikan nama file sesuai dengan yang Anda simpan (misal: bg-pattern.jpg) */
+            background-image: url('/images/bg-pattern.jpg'); 
+            
+            /* 2. Warna cadangan (cream muda) jika gambar belum termuat */
+            background-color: #fdf6e9; 
+
+            /* 3. Agar gambar diulang terus (karena ini pattern) */
+            background-repeat: repeat;
+            
+            /* 4. Ukuran Pattern: Ubah angka 400px ini untuk membesarkan/mengecilkan motif */
+            background-size: 400px; 
+            
+            /* 5. Posisi awal */
+            background-position: center top;
+            
+            /* 6. Agar Card Login Selalu di Tengah Layar (Vertikal & Horizontal) */
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+
+        /* Modifikasi Card Login agar lebih cantik dan kontras */
+        .card {
+            /* Beri bayangan lembut */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important; 
+            
+            /* Background putih solid */
+            background-color: #ffffff !important;
+            
+            /* Hilangkan border bawaan bootstrap dan beri sudut melengkung */
+            border: none !important;
+            border-radius: 12px !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Area Konten (Login/Register) -->
+    <div class="container w-100" layout:fragment="content">
+        <!-- Konten otomatis masuk disini -->
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

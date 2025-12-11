@@ -1,58 +1,55 @@
 package org.delcom.app.services;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 @Service
 public class FileStorageService {
-    @Value("${app.upload.dir:./uploads}")
-    protected String uploadDir;
 
-    public String storeFile(MultipartFile file, UUID todoId) throws IOException {
-        // Buat directory jika belum ada
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
+    private final Path rootLocation = Paths.get("uploads");
+
+    public FileStorageService() throws IOException {
+        // Branch 1: Folder Belum Ada (True) -> Create
+        // Branch 2: Folder Sudah Ada (False) -> Skip
+        if (!Files.exists(rootLocation)) {
+            Files.createDirectories(rootLocation);
         }
+    }
 
-        // Generate unique filename
-        String originalFilename = file.getOriginalFilename();
-        String fileExtension = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+    public String storeFile(MultipartFile file, UUID tugasId) throws IOException {
+        if (file.isEmpty()) {
+            throw new IOException("Failed to store empty file.");
         }
+        
+        String filename = tugasId.toString() + "_" + file.getOriginalFilename();
+        Path destinationFile = this.rootLocation.resolve(filename).normalize().toAbsolutePath();
 
-        String filename = "cover_" + todoId.toString() + fileExtension;
-
-        // Simpan file
-        Path filePath = uploadPath.resolve(filename);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
+        try (InputStream inputStream = file.getInputStream()) {
+            Files.copy(inputStream, destinationFile, StandardCopyOption.REPLACE_EXISTING);
+        }
+        
         return filename;
     }
 
-    public boolean deleteFile(String filename) {
-        try {
-            Path filePath = Paths.get(uploadDir).resolve(filename);
-            return Files.deleteIfExists(filePath);
-        } catch (IOException e) {
-            return false;
+    public void deleteFile(String filename) {
+        if (filename == null || filename.isBlank()) {
+            return;
         }
-    }
-
-    public Path loadFile(String filename) {
-        return Paths.get(uploadDir).resolve(filename);
-    }
-
-    public boolean fileExists(String filename) {
-        return Files.exists(loadFile(filename));
+        
+        try {
+            Path file = rootLocation.resolve(filename);
+            Files.deleteIfExists(file);
+        } catch (IOException e) {
+            // Bungkus ke RuntimeException agar bisa dites dan dihitung coverage-nya
+            throw new RuntimeException("Gagal menghapus file", e);
+        }
     }
 }

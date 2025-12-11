@@ -1,7 +1,8 @@
 package org.delcom.app.entities;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.UUID;
 
@@ -9,10 +10,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 public class UserTests {
+
     @Test
-    @DisplayName("Memembuat instance dari kelas User")
-    void testMembuatInstanceUser() throws Exception {
-        // User dengan nama, email dan password
+    @DisplayName("Membuat instance dari kelas User")
+    void testMembuatInstanceUser() {
+        
+        // 1. User dengan nama, email, dan password (Constructor 3 parameter)
         {
             User user = new User("Name", "email@example.com", "password123");
 
@@ -21,41 +24,49 @@ public class UserTests {
             assertEquals("password123", user.getPassword());
         }
 
-        // User dengan email dan password
+        // 2. User dengan email dan password (Constructor 2 parameter)
+        // Note: Di User.java, constructor ini memanggil this("", email, password)
+        // Jadi name diharapkan string kosong "", bukan null.
         {
             User user = new User("email@example.com", "password123");
-            assertEquals("", user.getName());
+            
+            assertEquals("", user.getName()); 
             assertEquals("email@example.com", user.getEmail());
             assertEquals("password123", user.getPassword());
         }
 
-        // User dengan nilai default
+        // 3. User dengan nilai default (Constructor kosong)
         {
             User user = new User();
 
-            assertEquals(null, user.getId());
-            assertEquals(null, user.getName());
-            assertEquals(null, user.getEmail());
-            assertEquals(null, user.getPassword());
+            assertNull(user.getId());
+            assertNull(user.getName());
+            assertNull(user.getEmail());
+            assertNull(user.getPassword());
         }
 
-        // User dengan setNilai
+        // 4. User dengan Setter dan Lifecycle Methods (onCreate, onUpdate)
         {
             User user = new User();
             UUID generatedId = UUID.randomUUID();
+            
             user.setId(generatedId);
             user.setName("Set Name");
             user.setEmail("Set Email");
             user.setPassword("Set Password");
+            
+            // Simulasikan event JPA @PrePersist dan @PreUpdate
             user.onCreate();
             user.onUpdate();
 
-            assertEquals(user.getId(), generatedId);
-            assertEquals(user.getName(), "Set Name");
-            assertEquals(user.getEmail(), "Set Email");
-            assertEquals(user.getPassword(), "Set Password");
-            assertTrue(user.getCreatedAt() != null);
-            assertTrue(user.getUpdatedAt() != null);
+            assertEquals(generatedId, user.getId());
+            assertEquals("Set Name", user.getName());
+            assertEquals("Set Email", user.getEmail());
+            assertEquals("Set Password", user.getPassword());
+            
+            // Gunakan assertNotNull untuk mengecek objek tidak null
+            assertNotNull(user.getCreatedAt());
+            assertNotNull(user.getUpdatedAt());
         }
     }
 }

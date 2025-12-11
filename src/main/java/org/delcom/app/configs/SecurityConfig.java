@@ -11,33 +11,33 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-        @Bean
-        SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-                http
-                                .exceptionHandling(ex -> ex
-                                                .authenticationEntryPoint((req, res, e) -> {
-                                                        res.sendRedirect("/auth/login");
-                                                }))
-                                .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/auth/**", "/assets/**", "/api/**",
-                                                                "/css/**", "/js/**")
-                                                .permitAll()
-                                                .anyRequest().authenticated())
 
-                                .formLogin(form -> form.disable())
-                                .logout(logout -> logout
-                                                .logoutSuccessUrl("/auth/login")
-                                                .permitAll())
-                                .rememberMe(remember -> remember
-                                                .key("uniqueAndSecret")
-                                                .tokenValiditySeconds(86400) // 24 jam
-                                );
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req, res, e) -> {
+                    // Line ini harus ditest agar coverage 100%
+                    res.sendRedirect("/auth/login");
+                }))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/auth/**", "/assets/**", "/api/**", "/css/**", "/js/**")
+                .permitAll()
+                .anyRequest().authenticated())
+            .formLogin(form -> form.disable())
+            .logout(logout -> logout
+                .logoutSuccessUrl("/auth/login")
+                .permitAll())
+            .rememberMe(remember -> remember
+                .key("uniqueAndSecret")
+                .tokenValiditySeconds(86400) // 24 jam
+            );
 
-                return http.build();
-        }
+        return http.build();
+    }
 
-        @Bean
-        public PasswordEncoder passwordEncoder() {
-                return new BCryptPasswordEncoder();
-        }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }
